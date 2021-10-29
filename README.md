@@ -1,5 +1,5 @@
-# kong-plugin-file-log-extended
-Extension of the built-in Kong file-log plugin
+# kong-plugin-log-extended
+Extended logging plugins for files and APM. Includes writing raw JSON for request and response content.
 
 ## Configuration
 
@@ -19,8 +19,11 @@ form parameter                | default | description
 ---                           | ---     | ---
 `name`                        |         | The name of the plugin to use, in this case: `file-log`
 `consumer_id`<br>*optional*   |         | The CONSUMER ID that this plugin configuration will target. This value can only be used if [authentication has been enabled][faq-authentication] so that the system can identify the user making the request.
-`config.path`                 |         | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.
 `config.log_bodies`           | `false` | Whether the plugin should log request and response bodies
+`config.log_apm`              | `true`  | Whether the plugin should write to a log file
+`config.apm_host`             |         | APM server hostname
+`config.log_file`             | `true`  | Whether the plugin should log to APM.
+`path`                        |         | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.
 
 [api-object]: https://getkong.org/docs/latest/admin-api/#api-object
 [configuration]: https://getkong.org/docs/latest/configuration

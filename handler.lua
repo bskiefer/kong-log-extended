@@ -2,8 +2,9 @@
 local ffi = require "ffi"
 local cjson = require "cjson"
 local system_constants = require "lua_system_constants"
-local serializer = require "kong.plugins.file-log-extended.serializer"
+local serializer = require "kong.plugins.log-extended.serializer"
 local BasePlugin = require "kong.plugins.base_plugin"
+local https = require "ssl.https"
 local req_read_body = ngx.req.read_body
 local req_get_body_data = ngx.req.get_body_data
 
@@ -126,18 +127,33 @@ local function log(premature, conf, message)
 
   local msg = cjson.encode(message).."\n"
 
-  local fd = get_fd(conf.path)
-  if not fd then
-    fd = ffi.C.open(string_to_char(conf.path), oflags, mode)
-    if fd < 0 then
-      local errno = ffi.errno()
-      ngx.log(ngx.ERR, "[file-log-extended] failed to open the file: ", ffi.string(ffi.C.strerror(errno)))
-    else
-      set_fd(conf.path, fd)
-    end
+
+  if conf.apm_logging then
+    local r, c, h, s = https.request {
+      url = 'https://'..conf.apm_host..'/v1/transactions',
+      method = 'POST',
+      headers = {
+        ["Content-Type"] = "application/json",
+        ["Content-Length"] = string.len(msg)
+      },
+      source = ltn12.source.string(msg)
+    }
   end
 
-  ffi.C.write(fd, string_to_char(msg), string_len(msg))
+  if conf.file_logging then
+    local fd = get_fd(conf.path)
+    if not fd then
+      fd = ffi.C.open(string_to_char(conf.path), oflags, mode)
+      if fd < 0 then
+        local errno = ffi.errno()
+        ngx.log(ngx.ERR, "[log-extended] failed to open the file: ", ffi.string(ffi.C.strerror(errno)))
+      else
+        set_fd(conf.path, fd)
+      end
+    end
+
+    ffi.C.write(fd, string_to_char(msg), string_len(msg))
+  end
 end
 
 local FileLogExtendedHandler = BasePlugin:extend()
@@ -145,7 +161,7 @@ local FileLogExtendedHandler = BasePlugin:extend()
 FileLogExtendedHandler.PRIORITY = 1
 
 function FileLogExtendedHandler:new()
-  FileLogExtendedHandler.super.new(self, "file-log-extended")
+  FileLogExtendedHandler.super.new(self, "log-extended")
 end
 
 function FileLogExtendedHandler:rewrite()
@@ -179,7 +195,7 @@ function FileLogExtendedHandler:log(conf)
 
   local ok, err = ngx_timer(0, log, conf, message)
   if not ok then
-    ngx.log(ngx.ERR, "[file-log-extended] failed to create timer: ", err)
+    ngx.log(ngx.ERR, "[log-extended] failed to create timer: ", err)
   end
 
 end

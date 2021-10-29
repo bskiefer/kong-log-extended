@@ -10,18 +10,8 @@ local function validate_file(value)
   return true
 end
 
--- return {
---   fields = {
---     path = { required = true, type = "string", func = validate_file },
---     log_bodies = { type = "boolean", default = true },
---     log_body = { type = "boolean", default = true },
---     exclude = { type = "array", elements = { type = "string" }}
---   }
--- }
--- local typedefs = require "kong.db.schema.typedefs"
-
 return {
-  name = "file-log-extended",
+  name = "log-extended",
   --no_consumer = false, -- this plugin is available on APIs as well as on Consumers,
   fields = {
     -- Describe your plugin's configuration's schema here.
@@ -32,6 +22,15 @@ return {
           
           {
             consumer = typedefs.no_consumer,
+          },
+          {
+            apm_logging = { type = "boolean", default = true },
+          },
+          {
+            apm_host = { required = false, type = "string" },
+          },
+          {
+            file_logging = { type = "boolean", default = true },
           },
           {
             path = { required = true, type = "string", custom_validator = validate_file },
