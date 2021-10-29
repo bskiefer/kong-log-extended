@@ -33,7 +33,7 @@ return {
             file_logging = { type = "boolean", default = true },
           },
           {
-            path = { required = true, type = "string", custom_validator = validate_file },
+            file_path = { required = true, type = "string", custom_validator = validate_file },
           },
           {
             log_bodies = { type = "boolean", default = true },

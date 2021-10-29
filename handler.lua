@@ -127,7 +127,6 @@ local function log(premature, conf, message)
 
   local msg = cjson.encode(message).."\n"
 
-
   if conf.apm_logging then
     local r, c, h, s = https.request {
       url = 'https://'..conf.apm_host..'/v1/transactions',
@@ -141,14 +140,14 @@ local function log(premature, conf, message)
   end
 
   if conf.file_logging then
-    local fd = get_fd(conf.path)
+    local fd = get_fd(conf.file_path)
     if not fd then
       fd = ffi.C.open(string_to_char(conf.path), oflags, mode)
       if fd < 0 then
         local errno = ffi.errno()
         ngx.log(ngx.ERR, "[log-extended] failed to open the file: ", ffi.string(ffi.C.strerror(errno)))
       else
-        set_fd(conf.path, fd)
+        set_fd(conf.file_path, fd)
       end
     end
 
@@ -156,41 +155,42 @@ local function log(premature, conf, message)
   end
 end
 
-local FileLogExtendedHandler = BasePlugin:extend()
+local LogExtendedHandler = BasePlugin:extend()
 
-FileLogExtendedHandler.PRIORITY = 1
+LogExtendedHandler.PRIORITY = 1
 
-function FileLogExtendedHandler:new()
-  FileLogExtendedHandler.super.new(self, "log-extended")
+function LogExtendedHandler:new()
+  LogExtendedHandler.super.new(self, "log-extended")
 end
 
-function FileLogExtendedHandler:rewrite()
-  FileLogExtendedHandler.super.rewrite(self)
+function LogExtendedHandler:rewrite()
+  LogExtendedHandler.super.rewrite(self)
 
   kong.service.request.enable_buffering()
 end
 
-function FileLogExtendedHandler:access(conf)
-  FileLogExtendedHandler.super.access(self)
+function LogExtendedHandler:access(conf)
+  LogExtendedHandler.super.access(self)
 
 
-  ngx.ctx.file_log_extended_req_body = { "" }
+  ngx.ctx.log_extended_req_body = ""
   if conf.log_bodies then
     req_read_body()
-    ngx.ctx.file_log_extended_req_body = get_request_body()
+    ngx.ctx.log_extended_req_body = get_request_body()
   end
 end
 
-function FileLogExtendedHandler:body_filter(conf)
-  FileLogExtendedHandler.super.body_filter(self)
+function LogExtendedHandler:body_filter(conf)
+  LogExtendedHandler.super.body_filter(self)
 
+  ngx.ctx.log_extended_res_body = ""
   if conf.log_bodies then
-    ngx.ctx.file_log_extended_res_body = kong.service.response.get_body()
+    ngx.ctx.log_extended_res_body = kong.service.response.get_body()
   end
 end
 
-function FileLogExtendedHandler:log(conf)
-  FileLogExtendedHandler.super.log(self)
+function LogExtendedHandler:log(conf)
+  LogExtendedHandler.super.log(self)
   local message = serializer.serialize(ngx)
 
   local ok, err = ngx_timer(0, log, conf, message)
@@ -200,4 +200,4 @@ function FileLogExtendedHandler:log(conf)
 
 end
 
-return FileLogExtendedHandler
+return LogExtendedHandler

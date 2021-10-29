@@ -57,14 +57,14 @@ function _M.serialize(ngx)
             method = ngx.req.get_method(), -- http method
             headers = ngx.req.get_headers(),
             size = ngx.var.request_length,
-            body = ngx.ctx.file_log_extended_req_body
+            body = ngx.ctx.log_extended_req_body
           },
           response = {
             status_code = ngx.status,
             finished = true,
             headers = ngx.resp.get_headers(),
             size = ngx.var.bytes_sent,
-            body = ngx.ctx.file_log_extended_res_body
+            body = ngx.ctx.log_extended_res_body
           }
         }
       }

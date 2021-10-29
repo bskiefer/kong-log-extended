@@ -23,7 +23,7 @@ form parameter                | default | description
 `config.log_apm`              | `true`  | Whether the plugin should write to a log file
 `config.apm_host`             |         | APM server hostname
 `config.log_file`             | `true`  | Whether the plugin should log to APM.
-`path`                        |         | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.
+`config.file_path`                        |         | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.
 
 [api-object]: https://getkong.org/docs/latest/admin-api/#api-object
 [configuration]: https://getkong.org/docs/latest/configuration
